@@ -1,0 +1,22 @@
+# Entornos y cachés de Python/Jupyter
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Resultados locales
+*.log
+.env
+.env.*
+!.env.example
+
+# Los datos reales se mantienen locales; solo se versionan marcadores.
+data/raw/*
+!data/raw/.gitkeep
+!data/raw/fivem/
+!data/raw/kaggle/
+data/raw/fivem/*
+!data/raw/fivem/.gitkeep
+data/raw/kaggle/*
+!data/raw/kaggle/.gitkeep
