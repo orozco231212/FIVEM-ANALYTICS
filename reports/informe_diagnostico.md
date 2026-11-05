@@ -1,77 +1,78 @@
-# Informe técnico: diagnóstico inicial de calidad de datos
+# Informe de diagnóstico y análisis descriptivo — FiveM Analytics
 
-**Proyecto:** Análisis de rendimiento, retención de jugadores y economía virtual en servidores de roleplay de FiveM GTA V  
-**Aprendiz:** David Alejandro Orozco Henao  
-**Evidencia:** EV05. La mención a EV06 en el título interno de la guía es un error del profesor, según la aclaración del aprendiz.  
-**Fecha de ejecución:** 4 de noviembre de 2026  
-**Entorno validado:** Python 3.15.2, Pandas 3.1.1  
-**Alcance:** escenario FiveM generado con semilla `20261104` y dataset público de Kaggle. El autor del dataset de Kaggle lo declara sintético. No hay observaciones de un servidor real.
+- **Proyecto:** análisis de actividad, economía virtual, retención y rendimiento en servidores de roleplay FiveM
+- **Aprendiz:** David Alejandro Orozco Henao
+- **Evidencia:** EV05. La referencia a EV06 en el título de la guía fue indicada como error del profesor.
+- **Ejecución documentada:** 4 de noviembre de 2026
+- **Entorno:** Python 3.15.2, Pandas 3.1.1, kernel `fivem-analytics`
+- **Alcance:** nueve CSV sintéticos para representar tablas FiveM, más un dataset público de Kaggle sintético según su autor. Ninguno es telemetría real.
 
-## 1. Propósito y pregunta analítica
+## 1. Pregunta y alcance de la respuesta
 
-El proyecto busca explorar cómo se relacionan la actividad de los jugadores, el rendimiento del servidor y la economía virtual para orientar decisiones sobre los sistemas de juego y la experiencia de la comunidad.
+La pregunta del proyecto busca identificar actividades, trabajos y zonas de mayor concurrencia y explorar la relación entre el balance económico, la retención y el tiempo de juego.
 
-**Pregunta:** ¿Cuáles son las actividades, trabajos y zonas del mapa con mayor concurrencia de jugadores dentro del servidor de FiveM, y cómo influye el balance económico (ingresos vs. gastos virtuales) en la retención y tiempo promedio de juego diario de la comunidad?
+Los archivos permiten ensayar esas operaciones y revisar la estructura relacional, pero fueron generados con reglas aleatorias y defectos sembrados. Por ello, los resultados cuantitativos de este informe describen **la simulación**, no una comunidad, un servidor, una economía ni un comportamiento de jugadores reales. La única fuente pública externa es el dataset de Kaggle, que tampoco es telemetría real.
 
-## 2. Fuentes seleccionadas y disponibilidad
+## 2. Fuentes inspeccionadas
 
-| Fuente | Contenido y uso | Archivos inspeccionados | Procedencia |
-|---|---|---|---|
-| Escenario de servidor FiveM | Sesiones, economía virtual, actividades y snapshots de concurrencia/rendimiento, según las variables propuestas en EP 2. | `sesiones_fivem_sinteticas.csv`, `transacciones_economicas_sinteticas.csv`, `actividad_jugadores_sintetica.csv` y `rendimiento_servidor_sintetico.csv`. | Generado para esta evidencia; no se extrajo de un servidor ni representa personas reales. |
-| Predict Online Gaming Behavior Dataset | Variables tabulares de juego y engagement como referencia general de análisis de jugadores. | `data/examples/kaggle/online_gaming_behavior_dataset.csv`. | Descarga pública de Kaggle, versión 1. Rabie El Kharoua, CC BY 4.0. El autor indica expresamente que los registros son sintéticos. |
+| Fuente | Contenido | Procedencia |
+|---|---|---|
+| Escenario sintético original | Sesiones, actividad, transacciones y snapshots simplificados. | `scripts/generar_datos_sinteticos.py`, semilla `20261104`. |
+| Escenario sintético ampliado | Perfiles de jugadores, sesiones, movimientos, vehículos y métricas horarias. | Adaptación reproducible del generador de escenarios compartido, `scripts/generar_datasets_ampliados.py`, semilla `42`. Los identificadores se marcan `SIM_`. |
+| Predict Online Gaming Behavior Dataset | Variables genéricas de comportamiento y engagement de videojuegos. | Descarga pública de Kaggle, versión 1, Rabie El Kharoua, CC BY 4.0. El autor declara que es sintético. Ver [atribución](../data/examples/kaggle/ATRIBUCION.md). |
 
-El escenario FiveM se genera mediante `scripts/generar_datos_sinteticos.py`, con 350 identificadores ficticios `SIM_PLAYER_*`, 5.000 sesiones base durante 60 días (más una fila duplicada), transacciones, eventos y snapshots horarios. Se sembraron algunos defectos a propósito para comprobar las operaciones de diagnóstico. Los resultados describen el comportamiento del generador y de la copia local del dataset de Kaggle, no un servidor o población real.
-
-**Referencia Kaggle:** [ficha del dataset](https://www.kaggle.com/datasets/rabieelkharoua/predict-online-gaming-behavior-dataset), versión 1, licencia CC BY 4.0, última actualización indicada por Kaggle: 21-06-2024. Atribución completa: [data/examples/kaggle/ATRIBUCION.md](../data/examples/kaggle/ATRIBUCION.md). La ficha declara que es sintético y educativo.
+Las fuentes FiveM se cargan desde `data/examples/fivem/` de forma recursiva. El Notebook convierte los campos identificadores a texto para conservar su precisión, los redacta en las muestras y no modifica los DataFrames originales. Las carpetas `data/raw/` no se usan para estos datos.
 
 ## 3. Diagnóstico estructural
 
-Las dimensiones, tipos y conteos siguientes son salida de la ejecución de todas las celdas del Notebook sobre los archivos disponibles. Pandas 3.1.1 representa texto con dtype `str`; en versiones de Pandas 2.x puede mostrarse como `object`. Ambos indican columnas de texto en estos CSV.
+| Archivo/DataFrame | Filas | Columnas | Hallazgo estructural principal |
+|---|---:|---:|---|
+| Actividad simplificada | 5.001 | 7 | Texto en las siete columnas; 1 zona vacía y 1 fila repetida. |
+| Rendimiento simplificado | 1.441 | 7 | 4 variables numéricas y 3 de texto; faltantes y defectos sembrados. |
+| Sesiones simplificadas | 5.001 | 8 | Duración como texto por valores heterogéneos; faltantes y duplicado. |
+| Transacciones simplificadas | 12.397 | 8 | Importe como texto por anomalías; faltantes y duplicado. |
+| Jugadores ampliados | 1.515 | 11 | 1.500 claves de jugador distintas; 15 registros completos añadidos como duplicados. |
+| Rendimiento ampliado | 2.840 | 7 | Muestreo horario entre 2026-06-01 y 2026-09-28; cinco métricas numéricas. |
+| Sesiones ampliadas | 8.000 | 10 | Sesiones desde 2026-06-01 hasta 2026-10-29, con actividad, zona y coordenadas. |
+| Transacciones ampliadas | 12.000 | 7 | Importe mixto (numérico y texto), fechas y tipos de movimiento. |
+| Vehículos ampliados | 2.200 | 9 | 10 modelos; faltantes de garaje/precio y valores fuera de rangos orientativos. |
+| Kaggle: comportamiento de juego | 40.034 | 13 | Sin nulos ni duplicados exactos en la copia examinada; `PlayerID` único en las 40.034 filas. |
 
-| Archivo/DataFrame | Filas | Columnas | Tipos de datos | Observaciones |
-|---|---:|---:|---|---|
-| Actividades FiveM simuladas | 5.001 | 7 | `str` (7) | Eventos sintéticos vinculados a sesiones; una zona faltante y un duplicado exacto. |
-| Rendimiento FiveM simulado | 1.441 | 7 | `str` (3), `int64` (2), `float64` (2) | Snapshots horarios; faltante en FPS, texto no numérico en memoria, CPU fuera del rango porcentual y duplicado. |
-| Sesiones FiveM simuladas | 5.001 | 8 | `str` (7), `int64` (1) | Duración inferida como texto por la palabra `noventa`; un valor faltante y un duplicado. |
-| Transacciones FiveM simuladas | 12.397 | 8 | `str` (8) | El importe queda como texto por la anomalía `sin_dato`; un importe faltante y un duplicado. |
-| Kaggle: comportamiento de juego | 40.034 | 13 | `str` (5), `int64` (7), `float64` (1) | Edad, género, ubicación, género de juego, tiempo, compras, sesiones, nivel, logros y engagement. Sin faltantes ni filas completas duplicadas. |
+La salida completa de `shape`, columnas, tipos, `info()`, `describe()`, faltantes, duplicados y hallazgos queda en [salidas_notebook.md](salidas_notebook.md).
 
-Las columnas de trabajo, zona, actividad y concurrencia están presentes para practicar análisis posteriores. Este informe se limita al diagnóstico de calidad y no presenta rankings de popularidad como hallazgos sobre una comunidad.
+## 4. Hallazgos de calidad
 
-## 4. Hallazgos de calidad basados en evidencia
+Los límites siguientes son reglas exploratorias para comprobar el diagnóstico. Deben validarse con la documentación de un servidor y no son reglas universales de FiveM.
 
-| Dataset/archivo | Problema identificado | Evidencia encontrada | Posible impacto | Acción propuesta |
-|---|---|---|---|---|
-| Actividades simuladas | 1 zona faltante y 1 fila duplicada. | `zone`: 5.000 valores no nulos de 5.001; `dataframe.duplicated()` = 1. | Una zona desconocida afecta la clasificación geográfica; una repetición puede sobrecontar actividad. Ambas condiciones fueron sembradas. | Revisar el evento de origen y su clave; no eliminar duplicados sin confirmar que no sean eventos válidos. |
-| Rendimiento simulado | 1 FPS faltante, 1 CPU fuera de rango, 1 texto no numérico en memoria y 1 duplicado. | `server_fps`: 1.440/1.441 presentes; `cpu_percent` máximo 145 (regla exploratoria 0–100); `memory_percent="sin_dato"`; 1 fila duplicada. | Impide resumir el intervalo faltante; un porcentaje >100 y una cadena requieren validar definición/unidad; el duplicado puede sesgar estadísticas. | Verificar procedencia/unidad de cada métrica; tratar faltantes, convertir tipos y revisar duplicados solo con regla del dominio. |
-| Sesiones simuladas | 1 duración faltante, 1 texto no numérico, 1 duración negativa, 1 fecha inválida y 1 duplicado. | `duration_minutes`: 5.000/5.001 presentes; valor `noventa`; duración `-8`; `disconnected_at="fecha_invalida"`; 1 fila completa duplicada. | Puede distorsionar duración promedio, secuencia temporal y conteo de sesiones. Los defectos fueron sembrados deliberadamente. | Parsear fecha/duración con formato explícito, verificar hora de desconexión y reglas de sesión; documentar el efecto antes de excluir/imputar. |
-| Transacciones simuladas | 1 importe faltante, 1 texto no numérico, 1 importe negativo y 1 duplicado. | `amount`: 12.396/12.397 presentes; valor `sin_dato`; importe `-250`; 1 fila duplicada. | Afecta sumas de ingresos/gastos y balance. La simulación usa `transaction_type` para distinguir ingreso/gasto; el valor negativo se sembró deliberadamente como anomalía. | Confirmar convención de signos, corregir/conservar el valor con trazabilidad y revisar duplicados por `transaction_id`. |
-| Kaggle público (sintético del autor) | No se observan valores faltantes ni duplicados exactos; revisar la limitación de representatividad y el alcance de `EngagementLevel`. | 40.034 filas; 40.034 `PlayerID` distintos; categorías de engagement: Medium 19.374, High 10.336, Low 10.324. | No representa FiveM; no contiene economía virtual, trabajos ni zonas del servidor. `EngagementLevel` no equivale por sí solo a retención real observada. No debe unirse con tablas FiveM por identificador. | Usar solo como referencia exploratoria separada; atribuir la fuente y describir sus variables sintéticas y límites. |
+| Tabla | Hallazgos medidos en los CSV sintéticos | Tratamiento recomendado |
+|---|---|---|
+| `players.csv` | 15 filas completamente duplicadas (15 claves `player_id` repetidas); `discord_id`: 92 faltantes; `job`: 44 faltantes y 25 filas con `POLICE`; `last_seen`: 20 faltantes; 12 valores de `cash` negativos; 8 `bank` por encima de 100 millones; 6 `age_character` fuera de 18–100. | Resolver duplicados por clave/fecha y confirmar reglas del saldo y la edad; uniformar categorías solo sobre una copia de análisis. Tratar Discord ID como texto; no publicar identificadores. |
+| `sessions.csv` | `disconnect_time`: 120 faltantes; `zone`: 150 faltantes; `duration_min`: 10 textos `unknown`, 40 negativos y 15 superiores a 720; 30 referencias a jugadores inexistentes. | Confirmar sesiones abiertas, validar duración contra conexión/desconexión y resolver referencias huérfanas antes de unir. No imputar zonas automáticamente. |
+| `transactions.csv` | `amount`: 179 faltantes; `account`: 100 faltantes; 30 timestamps inválidos; 15 importes con formato `$1,500`; 50 importes de magnitud 1.000 millones; 40 filas con `type="Salary "` que requieren normalización. | Mantener el valor original, documentar parseos, revisar los importes extremos y confirmar el significado de signo y de `transfer`; usar columnas normalizadas derivadas sin sobrescribir el CSV. |
+| `vehicles.csv` | `garage`: 433 faltantes; `price_paid`: 60 faltantes y 200 negativos; 35 valores de combustible mayores que 100; 25 `engine_health=-1`; 20 placas repetidas adicionales. | Confirmar unidades, modelos gratuitos, significado del estado del motor y política de placas duplicadas. El rango 0–100 de combustible es solo una hipótesis porcentual. |
+| `server_performance.csv` ampliado | 69 `server_fps` y 69 `cpu_pct` faltantes; 15 FPS en cero; 10 CPUs en 400%; 19 conteos negativos de jugadores; 40 horas faltantes del muestreo esperado. | Validar la tasa de muestreo, instrumentación y unidades. No interpolar huecos ni atribuirlos a caídas reales: fueron sembrados en un generador. |
+| Cuatro CSV simplificados | Se encontraron las anomalías controladas: faltantes, texto en duración/importe/memoria, fechas no interpretables, valores fuera de rango y un duplicado exacto por tabla. | Ver [tablas de hallazgos completas](salidas_notebook.md); los ejemplos no son evidencia de incidentes. |
+| Kaggle | 40.034 filas, 13 columnas, sin faltantes ni duplicados exactos en la copia examinada. `EngagementLevel`: Medium 19.374, High 10.336, Low 10.324. | Mantener separado de FiveM: no comparte jugadores, identificadores ni definiciones operativas. La etiqueta de engagement no es retención longitudinal observada. |
 
-El Notebook también observa los rangos del archivo Kaggle: edad 15–49, horas de juego 0–24, sesiones por semana 0–19, duración promedio 10–179 minutos, nivel 1–99 y logros 0–49. Son estadísticas de la distribución sintética publicada, no límites universales de calidad.
+La lectura de CSV sin tipo explícito puede convertir identificadores numéricos con faltantes en flotantes y perder precisión. El cargador del Notebook ahora impone tipo texto a nombres de columnas identificadoras antes de cargar los registros.
 
-## 5. Aspectos a validar durante la interpretación
+## 5. Resumen descriptivo de la simulación ampliada
 
-- **Valores faltantes:** se identificaron en zonas, FPS, duración de sesión y monto de transacción dentro del escenario. Se debe valorar su impacto por variable antes de decidir un tratamiento.
-- **Tipos:** las columnas con texto inesperado (`noventa`, `sin_dato`) hacen que las columnas completas se carguen como texto. La fecha `fecha_invalida` tampoco puede convertirse a fecha/hora.
-- **Posibles inconsistencias:** duración negativa, CPU de 145% y monto negativo activan reglas exploratorias. Se verifican contra el dominio; no se corrigen automáticamente.
-- **Duplicados:** el generador incluye una fila duplicada exacta en cada una de las cuatro tablas FiveM. `duplicated()` no demuestra por sí solo que un evento real sea erróneo; comparar la clave y la regla de negocio.
-- **Cobertura/comparabilidad:** el Kaggle es de videojuegos generales y no comparte comunidad, periodo, identificadores, trabajos, zonas ni economía con el escenario FiveM. No se pueden relacionar las filas ni inferir causas de retención con esta combinación.
-- **Privacidad/licencia:** los identificadores FiveM son ficticios y los identificadores de Kaggle proceden de su dataset sintético. La fuente pública se mantiene con la atribución CC BY 4.0.
+Para este resumen se conservaron los CSV fuente sin modificar. Solo en copias temporales se normalizaron espacios/mayúsculas, se parsearon números y se excluyeron los registros señalados a continuación.
 
-## 6. Limpieza y preparación propuestas
+- **Sesiones:** 7.970 de 8.000 filas se enlazan con un jugador existente. Tras excluir duraciones no numéricas o fuera de 1–720 minutos, quedan 7.905 sesiones para los conteos de actividad/zona y medidas de duración.
+- **Actividad:** entre las sesiones válidas, `police_patrol` aparece 1.024 veces, `drug_dealing` 1.012 y `mining` 1.009; la categoría `none` aparece 947 veces. Estos órdenes proceden de selecciones aleatorias del generador.
+- **Zona:** 1.002 sesiones válidas están etiquetadas `Legion Square`; 924, `Sandy Shores`; 149 carecen de zona. Las coordenadas fueron generadas aleatoriamente y no se validaron contra el mapa; no se puede afirmar que una zona tenga más concurrencia real.
+- **Repetición a 7 días:** 1.436 de 1.488 jugadores elegibles (96,5%) tuvieron otra sesión al menos siete días después de su primera sesión observada. Es una proxy del periodo sintético; no es una tasa real de retención ni churn.
+- **Economía frente al tiempo:** tras retirar 50 valores extremos de 1.000 millones y parsear los importes con símbolo, la correlación descriptiva entre la suma firmada de transacciones y los minutos de sesión válidos por jugador es `-0,019` (1.487 jugadores emparejados). No muestra una asociación lineal apreciable en esta simulación y no permite concluir que la economía afecte la retención.
+- **Concurrencia y FPS:** la correlación descriptiva entre jugadores concurrentes y FPS, después de excluir mediciones fuera de los límites orientadores, es `-0,815`. La fórmula del generador reduce FPS al aumentar la concurrencia; esto verifica el comportamiento programado, no mide el rendimiento de un servidor.
+- **Rendimiento por recurso:** `heaviest_resource` se asigna aleatoriamente en el generador; sus promedios no identifican un cuello de botella ni permiten atribuir causalidad a un recurso.
+- **Vehículos:** las frecuencias y medianas por modelo describen solo los valores aleatorios generados. Los 200 precios negativos y las métricas fuera de rango requieren revisión antes de cualquier total económico.
 
-No se ejecuta limpieza completa, tal como indica la guía. Para preparar datos de una futura fuente observada, se propone:
+Kaggle no se unió a las tablas FiveM. Su población sintética es distinta y sus variables no bastan para responder la pregunta de retención de un servidor concreto.
 
-1. Comprobar fechas y duraciones contra la exportación y convertir con formato explícito; separar fallos de parseo.
-2. Confirmar la convención de signos de transacciones y la unidad de cada monto antes de agregar ingresos y gastos.
-3. Investigar valores faltantes y determinar si corresponde recuperarlos, excluirlos o dejarlos sin imputación.
-4. Verificar filas duplicadas mediante identificadores y reglas del evento; no borrar solo por coincidencia de todas las columnas.
-5. Validar métricas porcentuales y rangos de sesiones con el esquema del servidor y la definición original de cada variable.
-6. Mantener el Kaggle como dataset de referencia independiente; no combinarlo con FiveM como si PlayerID representara al mismo jugador.
+## 6. Conclusiones y trabajo pendiente para resultados reales
 
-## 7. Conclusiones
+El proyecto ya cuenta con un flujo reproducible para cargar, describir, revisar calidad, validar algunas relaciones entre tablas y resumir el escenario simulado. No se realizó limpieza destructiva, entrenamiento predictivo ni inferencia estadística; las fuentes no respaldan conclusiones sobre un servidor real.
 
-El Notebook carga e inspecciona de manera reproducible cinco DataFrames y detecta las anomalías incluidas en el escenario, mientras confirma que el CSV público de Kaggle no tiene faltantes ni duplicados completos en la copia revisada. Las anomalías de FiveM fueron sembradas; no se deben presentar como incidencias de un servidor. El dataset de Kaggle es una fuente pública y atribuida, pero también sintética según su autor. Ninguna de las dos fuentes permite concluir cómo se comporta una comunidad real ni inferir causalidad entre economía y retención.
-
-La pregunta original menciona zonas, concurrencia, balance económico y retención. El escenario ayuda a probar esas variables, pero Kaggle no tiene los mismos jugadores ni un indicador longitudinal de retención, y los snapshots/eventos simulados no equivalen a telemetría operativa. Para conclusiones reales se requiere permiso/acceso a un servidor o cambiar explícitamente el alcance con el instructor para aceptar un caso simulado.
+Para afirmar resultados empíricos, se necesita una exportación autorizada y anonimizada, con diccionario de datos, unidades, zona horaria, reglas de ingresos/gastos, calendario de muestreo y claves de relación. Las fuentes reales deben mantenerse separadas en `data/raw/`, ejecutar el Notebook con `DATA_MODE="real"` y sustituir las conclusiones de simulación por resultados respaldados por esos archivos. No subir datos personales o privados al repositorio.

@@ -2,7 +2,7 @@
 
 Proyecto de ciencia de datos sobre servidores de roleplay de FiveM GTA V. Esta entrega diagnóstica un escenario FiveM simulado y un dataset público de Kaggle que su autor también declara sintético. El informe documenta los resultados de esas fuentes; no son hallazgos de un servidor real.
 
-> **Alcance de los datos:** no se dispone de un servidor propio. Los cuatro archivos FiveM son una simulación reproducible, no registros de un servidor real. El archivo público de Kaggle sí fue descargado, pero su autor también lo identifica como sintético. Se puede diagnosticar el caso simulado; no debe afirmarse que sus resultados describan una comunidad real. Consulta [data/examples/README.md](data/examples/README.md).
+> **Alcance de los datos:** no se dispone de un servidor propio. Los nueve CSV FiveM son simulaciones reproducibles, no registros de un servidor real. El archivo público de Kaggle también es sintético según su autor. Los resultados sirven para practicar el flujo de análisis, no para afirmar cómo se comporta una comunidad real. Consulta [data/examples/README.md](data/examples/README.md).
 >
 > **Identificación de la evidencia:** esta entrega corresponde a **EV05**. El título interno de la guía y la mención a EV06 son un error del profesor, según la aclaración del aprendiz.
 
@@ -20,7 +20,7 @@ Proyecto de ciencia de datos sobre servidores de roleplay de FiveM GTA V. Esta e
 
 | Fuente | Uso previsto | Estado en el repositorio |
 |---|---|---|
-| Escenario FiveM simulado | Examinar sesiones, economía, actividades y rendimiento como si provinieran de exportaciones de un servidor. | Cuatro CSV reproducibles en `data/examples/fivem/`; contienen datos inventados y anomalías sembradas para diagnosticar. |
+| Escenario FiveM simulado | Practicar diagnóstico y análisis descriptivo de jugadores, sesiones, economía, vehículos, actividad y rendimiento. | Nueve CSV reproducibles en `data/examples/fivem/`, generados por dos scripts; todas las tablas y anomalías son sintéticas. |
 | Kaggle: Predict Online Gaming Behavior Dataset | Comparar variables generales de engagement y hábitos de juego con el escenario FiveM. | CSV público en `data/examples/kaggle/`; versión 1. La ficha de Kaggle lo identifica explícitamente como sintético, no como telemetría real. |
 
 **Fuente Kaggle y atribución:** Rabie El Kharoua, [Predict Online Gaming Behavior Dataset](https://www.kaggle.com/datasets/rabieelkharoua/predict-online-gaming-behavior-dataset), versión 1, licencia CC BY 4.0, última actualización indicada por Kaggle: 21-06-2024. Kaggle advierte que el dataset es sintético y generado con fines educativos. La descarga aporta una referencia pública; no convierte sus registros en datos reales de FiveM.
@@ -42,12 +42,16 @@ fivem-analytics/
 ├── notebooks/
 │   └── diagnostico_calidad.ipynb
 ├── reports/
-│   └── informe_diagnostico.md
+│   ├── informe_diagnostico.md
+│   └── salidas_notebook.md
 ├── scripts/
-│   └── generar_datos_sinteticos.py
+│   ├── generar_datos_sinteticos.py
+│   └── generar_datasets_ampliados.py
 ├── tests/
-│   └── test_generar_datos_sinteticos.py
-├── run_nb.py
+│   ├── test_generar_datos_sinteticos.py
+│   └── test_generar_datasets_ampliados.py
+├── .vscode/
+│   └── settings.json
 ├── .gitignore
 └── requirements.txt
 ```
@@ -71,23 +75,18 @@ En VS Code, abre el Notebook y selecciona el kernel **Python (fivem-analytics .v
 
 Si aparece el cuadro **“La ejecución de celdas con Python 3.15.2 requiere el paquete ipykernel”**, pulsa **Cambiar Kernel** en ese cuadro. En el selector del Notebook, elige **Python (fivem-analytics .venv)** (o **Seleccionar otro kernel → Entornos de Python → `.venv\Scripts\python.exe`**). Después reinicia el kernel y vuelve a ejecutar las celdas. No es necesario instalar `ipykernel` en el Python global: ya está incluido en `requirements.txt` y en `.venv`.
 
-## Validación automatizada del Notebook
+## Regenerar los datos sintéticos
 
-Para ejecutar todas las celdas del Notebook sin abrir Jupyter, desde la raíz del proyecto:
-
-```powershell
-python run_nb.py
-```
-
-El script informa `OK` por celda y termina con `Notebook ejecutado correctamente.` si no hay errores. Los archivos auxiliares de salida no se versionan.
-
-Para regenerar los cuatro archivos del escenario simulado, desde la raíz ejecuta:
+Desde la raíz, ejecuta los dos generadores. El primero crea las cuatro tablas demostrativas originales y el segundo genera las cinco tablas relacionales ampliadas dentro de `data/examples/fivem/`; ninguno escribe datos a `data/raw/`.
 
 ```powershell
 python scripts/generar_datos_sinteticos.py
+python scripts/generar_datasets_ampliados.py
 ```
 
-El generador usa una semilla fija para que el escenario sea reproducible. En VS Code, instala/activa las extensiones Python y Jupyter, abre `notebooks/diagnostico_calidad.ipynb`, elige el kernel **Python (fivem-analytics .venv)** y ejecuta todas las celdas. Para inspeccionar fuentes seleccionadas del proyecto, coloca la exportación FiveM autorizada y anonimizada en `data/raw/fivem/`, el dataset de referencia en `data/raw/kaggle/` y cambia `DATA_MODE` a `"real"` en la celda de configuración. No llames reales a registros sintéticos ni combines poblaciones no comparables.
+Ambos generadores usan semillas fijas. Para ejecutar la evidencia en VS Code, abre `notebooks/diagnostico_calidad.ipynb`, elige el kernel **Python (fivem-analytics .venv)** y ejecuta todas las celdas. El Notebook inspecciona automáticamente los CSV dentro de las subcarpetas de cada fuente, conserva los DataFrames originales y redacta identificadores en las muestras.
+
+Para analizar fuentes reales autorizadas, colócalas en `data/raw/fivem/` y `data/raw/kaggle/` y cambia `DATA_MODE` a `"real"`. No mezcles datos sintéticos con exportaciones reales como si tuvieran la misma procedencia.
 
 El proyecto trabaja con archivos CSV. Si alguno usa un delimitador distinto de coma o una codificación especial, ajusta los argumentos de `pd.read_csv` en el Notebook y documenta el cambio; no se adivina ni se transforma el contenido en silencio. Los problemas de carga se muestran con el archivo que los produjo. Para ejecutar la prueba del generador:
 
@@ -105,9 +104,9 @@ Para cada archivo cargado, el Notebook registra o muestra:
 - Cantidad y porcentaje de valores faltantes por columna y cantidad de filas duplicadas.
 - Notas de interpretación y preguntas de validación semántica. Los duplicados o valores atípicos no se eliminan automáticamente: se documentan y se decide su tratamiento con conocimiento del dominio.
 
-El informe correspondiente está en [reports/informe_diagnostico.md](reports/informe_diagnostico.md). Sus conclusiones se refieren solamente al escenario sintético y al dataset de Kaggle (que también es sintético); no describen un servidor real.
+El informe correspondiente está en [reports/informe_diagnostico.md](reports/informe_diagnostico.md). Sus conclusiones se refieren solamente a los escenarios sintéticos y al dataset de Kaggle (que también es sintético); no describen un servidor real.
 
-Las salidas completas de todas las celdas del Notebook, ejecutadas con los archivos disponibles, están en [reports/salidas_notebook.md](reports/salidas_notebook.md). Este archivo es una captura textual independiente; no modifica ni guarda salidas dentro del Notebook.
+Las salidas completas de todas las celdas del Notebook, ejecutadas con los archivos disponibles, están en [reports/salidas_notebook.md](reports/salidas_notebook.md). Es una captura textual independiente; el Notebook se mantiene sin resultados guardados para evitar muestras accidentales.
 
 ## Flujo Git
 
@@ -118,7 +117,7 @@ git init -b main
 git remote add origin https://github.com/orozco231212/FIVEM-ANALYTICS.git
 git switch -c develop
 git switch -c feature/ev05-diagnostico-calidad
-git add .gitignore README.md requirements.txt data notebooks reports scripts tests
+git add .gitignore .vscode README.md requirements.txt data notebooks reports scripts tests
 git commit -m "feat: add EV05 FiveM data quality diagnosis"
 git switch develop
 git merge --no-ff feature/ev05-diagnostico-calidad
@@ -143,10 +142,12 @@ Para futuros incrementos se pueden usar nombres como `feature/fivem-data-export`
 
 - [x] Identificar la evidencia como EV05; la mención a EV06 en el título de la guía es un error del profesor, según la aclaración del aprendiz.
 - [x] Identificar el dataset público de Kaggle, registrar su autor, URL, versión y licencia, y advertir que es sintético.
-- [x] Crear datasets reproducibles para sesiones, transacciones, actividades y rendimiento FiveM; distinguirlos de telemetría observada.
-- [x] Ejecutar y documentar el diagnóstico del escenario sintético.
+- [x] Crear y documentar nueve CSV reproducibles para perfiles, sesiones, economía, actividades, vehículos y rendimiento; distinguirlos de telemetría observada.
+- [x] Validar referencias entre jugadores, sesiones, transacciones y vehículos, y documentar el análisis descriptivo de la simulación.
+- [x] Ejecutar el Notebook con kernel `.venv` sobre las diez tablas disponibles y generar un archivo separado con todas las salidas.
 - [ ] Si posteriormente se obtiene acceso a un servidor, añadir exportaciones autorizadas y anonimizadas antes de afirmar resultados reales.
-- [x] Validar las celdas del Notebook sobre los CSV disponibles y documentar dimensiones, tipos, faltantes, duplicados, anomalías sembradas, impactos y límites en el informe.
-- [ ] Ejecutar el Notebook con el kernel `.venv` en VS Code antes de la entrega final y revisar visualmente sus tablas.
-- [ ] Revisar que el Notebook no guarde muestras sensibles en sus salidas y que Git no incluya datos privados.
+- [x] Documentar dimensiones, tipos, faltantes, duplicados, anomalías sembradas, relaciones y límites en el informe.
+- [x] Mantener el Notebook sin salidas guardadas; las muestras visibles redactan las columnas identificadoras.
+- [ ] Ejecutar el Notebook en VS Code y revisar visualmente sus tablas antes de la entrega final.
+- [ ] Confirmar que Git no incluya datos privados.
 - [ ] Publicar el repositorio y entregar su URL en Classroom.

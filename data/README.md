@@ -1,6 +1,6 @@
 # Preparación de las fuentes de datos
 
-El Notebook usa por defecto cuatro CSV reproducibles del escenario simulado FiveM y un dataset público de Kaggle. El dataset de Kaggle está publicado bajo CC BY 4.0, pero su autor declara que es sintético. Ninguna de las dos fuentes es telemetría observada de un servidor FiveM real.
+El Notebook usa por defecto nueve CSV reproducibles del escenario simulado FiveM (cuatro originales y cinco tablas relacionales ampliadas) y un dataset público de Kaggle. El dataset de Kaggle está publicado bajo CC BY 4.0, pero su autor declara que es sintético. Ninguna de las fuentes es telemetría observada de un servidor FiveM real.
 
 El generador `scripts/generar_datos_sinteticos.py` crea estas tablas de escenario:
 
@@ -8,6 +8,16 @@ El generador `scripts/generar_datos_sinteticos.py` crea estas tablas de escenari
 - Transacciones simuladas de ingresos y gastos.
 - Eventos de actividad vinculados a sesiones.
 - Muestreos simulados de jugadores conectados, FPS y consumo de recursos.
+
+El generador `scripts/generar_datasets_ampliados.py` crea en `examples/fivem/expanded/`:
+
+- `players.csv`: perfiles y balances ficticios, con identificadores `SIM_*`.
+- `sessions.csv`: sesiones, actividad, zonas y coordenadas de demostración.
+- `transactions.csv`: movimientos económicos de ejemplo con signo, tipo y cuenta.
+- `vehicles.csv`: vehículos, propietarios simulados, placas ficticias, garaje, combustible y estado.
+- `server_performance.csv`: muestreo horario de concurrencia, FPS, tickrate, CPU, RAM y una etiqueta de recurso.
+
+Las claves `player_id` relacionan perfiles, sesiones, transacciones y propietarios de vehículos; se sembraron 30 referencias huérfanas en sesiones para probar validaciones de integridad. Hay anomalías intencionales en cada tabla, como duplicados, faltantes, valores extremos, fechas inválidas y variantes de formato. Son condiciones de práctica, no incidentes reales. El Notebook convierte los campos identificadores a texto para conservar precisión y los redacta en las muestras mostradas.
 
 El archivo de Kaggle en `data/examples/kaggle/online_gaming_behavior_dataset.csv` aporta variables de engagement generales. Sus variables y población no corresponden a un servidor FiveM concreto. Sus metadatos están en `data/examples/kaggle/ATRIBUCION.md`.
 
