@@ -1,0 +1,11 @@
+dataset,stage,rows,columns,missing_cells,exact_duplicate_rows
+players,before,1515,11,156,15
+sessions,before,8000,10,270,0
+transactions,before,12000,7,279,0
+vehicles,before,2200,9,493,0
+server_performance,before,2840,7,138,0
+players,after,1500,11,160,0
+sessions,after,8000,10,280,0
+transactions,after,12000,7,309,0
+vehicles,after,2200,9,753,0
+server_performance,after,2840,7,182,0
