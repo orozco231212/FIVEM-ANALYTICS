@@ -1,4 +1,4 @@
-# FiveM Analytics: diagnóstico inicial de calidad de datos
+# FiveM Analytics: preparación y análisis de datos
 
 Proyecto de ciencia de datos sobre servidores de roleplay de FiveM GTA V. Esta entrega diagnóstica un escenario FiveM simulado y un dataset público de Kaggle que su autor también declara sintético. El informe documenta los resultados de esas fuentes; no son hallazgos de un servidor real.
 
@@ -32,16 +32,15 @@ Consulta [data/README.md](data/README.md) para entender las fuentes. Los datos p
 ```text
 fivem-analytics/
 ├── data/
-│   ├── README.md
-│   ├── examples/
-│   │   ├── fivem/ (datos simulados)
-│   │   └── kaggle/ (dataset público sintético)
-│   └── raw/
-│       ├── fivem/
-│       └── kaggle/
+│   ├── examples/ (fuentes sintéticas y Kaggle)
+│   ├── raw/ (datos originales autorizados; no versionar)
+│   └── processed/ (CSV limpios y tablas de análisis)
 ├── notebooks/
-│   └── diagnostico_calidad.ipynb
+│   ├── data_quality.ipynb
+│   ├── diagnostico_calidad.ipynb (nombre histórico)
+│   └── data_preparation.ipynb
 ├── reports/
+│   ├── data_quality.md
 │   ├── informe_diagnostico.md
 │   └── salidas_notebook.md
 ├── scripts/
@@ -86,6 +85,16 @@ python scripts/generar_datasets_ampliados.py
 
 Ambos generadores usan semillas fijas. Para ejecutar la evidencia en VS Code, abre `notebooks/diagnostico_calidad.ipynb`, elige el kernel **Python (fivem-analytics .venv)** y ejecuta todas las celdas. El Notebook inspecciona automáticamente los CSV dentro de las subcarpetas de cada fuente, conserva los DataFrames originales y redacta identificadores en las muestras.
 
+## Preparación de datos EV07
+
+Ejecuta `notebooks/data_preparation.ipynb` desde la raíz del repositorio después de regenerar los datos ampliados. El Notebook conserva las fuentes bajo `data/examples/fivem/expanded/`, compara calidad antes/después, elimina solo duplicados exactos, estandariza categorías, convierte fechas y números y deja como faltantes los valores que no se pueden interpretar o validar. No imputa campos desconocidos.
+
+El análisis aplica filtros de duración y referencias válidas, resume sesiones por actividad, trabajo y zona, calcula indicadores de juego y crea una fila por jugador mediante agregaciones de sesiones y transacciones con uniones validadas. La repetición a 7 días es una proxy con observación suficiente, no retención medida de un servidor real. Vehículos y rendimiento se exportan por separado porque no hay una relación analítica que justifique unirlos con sesiones. Todas las cifras describen únicamente la simulación sintética.
+
+El Notebook genera en `data/processed/` los perfiles, sesiones, transacciones, vehículos y métricas de rendimiento limpios, tres resúmenes (`sessions_by_activity.csv`, `sessions_by_job.csv` y `sessions_by_zone.csv`), la tabla consolidada `player_analysis.csv` y `quality_comparison.csv`. Los perfiles exportados omiten `license`, `discord_id` y `username`; el `player_id` retenido es una clave ficticia de relación. Revisa [reports/data_quality.md](reports/data_quality.md) para el tratamiento y sus límites.
+
+El diagnóstico anterior permanece disponible en `notebooks/diagnostico_calidad.ipynb` y `reports/informe_diagnostico.md`; `notebooks/data_quality.ipynb` conserva el nombre solicitado por la estructura de entrega.
+
 Para analizar fuentes reales autorizadas, colócalas en `data/raw/fivem/` y `data/raw/kaggle/` y cambia `DATA_MODE` a `"real"`. No mezcles datos sintéticos con exportaciones reales como si tuvieran la misma procedencia.
 
 El proyecto trabaja con archivos CSV. Si alguno usa un delimitador distinto de coma o una codificación especial, ajusta los argumentos de `pd.read_csv` en el Notebook y documenta el cambio; no se adivina ni se transforma el contenido en silencio. Los problemas de carga se muestran con el archivo que los produjo. Para ejecutar la prueba del generador:
@@ -110,31 +119,27 @@ Las salidas completas de todas las celdas del Notebook, ejecutadas con los archi
 
 ## Flujo Git
 
-El repositorio remoto indicado (`orozco231212/FIVEM-ANALYTICS`) estaba vacío al preparar esta estructura y la carpeta de trabajo no tenía un historial Git disponible. Para iniciar Git Flow con el primer incremento, ejecuta desde la raíz del proyecto:
+Para este incremento, crea la rama desde `develop` actualizada y publica únicamente la rama de trabajo:
+
+Usa `feature/project-data-preparation` para este trabajo. Cuando `develop` esté disponible en el remoto, actualízala antes de crear futuras ramas:
 
 ```powershell
-git init -b main
-git remote add origin https://github.com/orozco231212/FIVEM-ANALYTICS.git
-git switch -c develop
-git switch -c feature/ev05-diagnostico-calidad
-git add .gitignore .vscode README.md requirements.txt data notebooks reports scripts tests
-git commit -m "feat: add EV05 FiveM data quality diagnosis"
+git fetch origin
 git switch develop
-git merge --no-ff feature/ev05-diagnostico-calidad
-git push -u origin develop
-git switch main
-git merge --no-ff develop
-git push -u origin main
-git push -u origin feature/ev05-diagnostico-calidad
+git pull --ff-only origin develop
+git switch -c feature/<topic>
 ```
 
-Después de esta entrega, crea cada incremento desde `develop` con `git switch -c feature/<tema>`. Antes de integrar, valida el Notebook con los datos autorizados y completa el informe. No incluyas archivos privados ni fuerces su inclusión en Git.
+Para registrar los hitos de esta evidencia, usa los mensajes `feat: clean and standardize project data`, `feat: implement data filtering and aggregation`, `feat: prepare and validate processed datasets` y `docs: update project README` en los commits que correspondan a cada cambio. Publica la rama con `git push -u origin feature/project-data-preparation`.
+
+Fusiona la rama publicada con `develop` solo después de validar la ejecución y revisar que ningún dato privado se incluya. Mantén las fuentes autorizadas en `data/raw/`; nunca las fuerces al control de versiones.
 
 Convenciones:
 
 - `main`: versión estable y entregable.
 - `develop`: integración del trabajo.
-- `feature/ev05-diagnostico-calidad`: implementación de esta evidencia; crear otras ramas `feature/<tema>` para nuevos incrementos.
+- `feature/ev05-diagnostico-calidad`: diagnóstico de calidad anterior.
+- `feature/project-data-preparation`: preparación, análisis y exportación de los datasets procesados.
 
 Para futuros incrementos se pueden usar nombres como `feature/fivem-data-export`, `feature/kaggle-dataset`, `feature/player-retention` y `feature/economy-analysis`. Usa mensajes de commit descriptivos. No publiques datasets reales en ramas ni commits.
 
